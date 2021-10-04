@@ -7,17 +7,12 @@ import sys
 
 pygame.init()
 
-WINDOW_WIDTH = 1000
-WINDOW_HEIGHT = 1080
-WINDOW = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.NOFRAME)
-pygame.display.set_caption("Game2")
-
 FRAME_TIME = pygame.time.Clock()
 
 # VARIABLES #
 
 dt = 0.001
-gravity = -5
+gravity = -10
 
 screen_scrolling_active = False
 relative_height = 0
@@ -86,33 +81,34 @@ while True:
     # DRAWING #
 
     WINDOW.fill((0, 0, 0))
+    draw_walls()
 
-    if screen_scrolling_active and relative_height < (WINDOW_HEIGHT / 2) * (platform_id - 1):        
+    if screen_scrolling_active and relative_height < (PLAYAREA_HEIGHT / 2) * (platform_id - 1):        
         relative_height = change_relative_height(height_increase)
-        if relative_height + height_increase >= (WINDOW_HEIGHT / 2) * (platform_id - 1):
+        if relative_height + height_increase >= (PLAYAREA_HEIGHT / 2) * (platform_id - 1):
             screen_scrolling_active = False
 
     if player_alive:
-        draw_score(WINDOW, score)
+        draw_score(score)
     else:
-        draw_death_message(WINDOW, score)
-        
-    draw_rectangle(WINDOW, (150, 27, 95), player_rectangle(player_x, player_y, player_width, player_height))
+        draw_death_message(score)
+
+    draw_rectangle((150, 27, 95), player_rectangle(player_x, player_y, player_width, player_height))
     for platform in platforms:
-        draw_platform(WINDOW, platform_rectangle(platform))
+        draw_platform(platform_rectangle(platform))
 
     pygame.display.update()
 
     # COLLISIONS #
 
-    if player_x + player_velocity_x < player_width / 2 or player_x + player_velocity_x > WINDOW_WIDTH - player_width / 2:
+    if player_x + player_velocity_x < player_width / 2 or player_x + player_velocity_x > PLAYAREA_WIDTH - player_width / 2:
         player_velocity_x = horizontal_bounce(player_velocity_x)
-    if player_y + player_velocity_y < player_height / 2:
+    if player_y + player_velocity_y < player_height / 2 + relative_height:
         if death_enabled:
             player_alive = False
         else:
             player_velocity_x, player_velocity_y = vertical_bounce(player_velocity_x, player_velocity_y)
-    elif player_y + player_velocity_y > WINDOW_HEIGHT - player_height / 2 + relative_height:
+    elif player_y + player_velocity_y > PLAYAREA_HEIGHT - player_height / 2 + relative_height:
         player_velocity_x, player_velocity_y = vertical_bounce(player_velocity_x, player_velocity_y)
     for platform in platforms:
         player_rect = player_rectangle(player_x + player_velocity_x, player_y + player_velocity_y, player_width, player_height)

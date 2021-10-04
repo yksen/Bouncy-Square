@@ -5,12 +5,20 @@ import random
 
 pygame.init()
 
-WINDOW_WIDTH = 1000
-WINDOW_HEIGHT = 1080
+WINDOW = pygame.display.set_mode(flags=pygame.FULLSCREEN)
+pygame.display.set_caption("Game2")
+WINDOW_SIZE = pygame.display.get_window_size()
 
-MAIN_FONT = pygame.font.SysFont('calibri', int(WINDOW_HEIGHT / 16), True)
-MAIN_FONT_SMALL = pygame.font.SysFont('calibri', int(WINDOW_HEIGHT / 32), italic=True)
+WINDOW_WIDTH = WINDOW_SIZE[0]
+WINDOW_HEIGHT = WINDOW_SIZE[1]
 
+PLAYAREA_WIDTH = 1000
+PLAYAREA_HEIGHT = WINDOW_HEIGHT
+
+CENTERING_OFFSET = WINDOW_WIDTH / 2 - PLAYAREA_WIDTH / 2
+
+MAIN_FONT = pygame.font.SysFont('calibri', int(PLAYAREA_HEIGHT / 16), True)
+MAIN_FONT_SMALL = pygame.font.SysFont('calibri', int(PLAYAREA_HEIGHT / 32), italic=True)
 
 # VARIABLES #
 
@@ -31,35 +39,39 @@ class Platform:
 def generate_platform(id):
     return Platform(
         id,
-        random.randint(platform_maximum_width / 2, WINDOW_WIDTH - platform_maximum_width / 2),
-        WINDOW_HEIGHT / 4 + id * (WINDOW_HEIGHT / 2),
+        random.randint(platform_maximum_width / 2, PLAYAREA_WIDTH - platform_maximum_width / 2),
+        PLAYAREA_HEIGHT / 4 + id * (PLAYAREA_HEIGHT / 2),
         random.randint(platform_minimum_width, platform_maximum_width),
         platform_height
     )
 
 def player_rectangle(x, y, width, height):
     global relative_height
-    return pygame.Rect(x - width / 2, WINDOW_HEIGHT - y - height / 2 + relative_height, width, height)
+    return pygame.Rect(CENTERING_OFFSET + x - width / 2, PLAYAREA_HEIGHT - y - height / 2 + relative_height, width, height)
 
 def platform_rectangle(platform):
     global relative_height
-    return pygame.Rect(platform.x - platform.width / 2, WINDOW_HEIGHT - platform.y - platform.height / 2 + relative_height, platform.width, platform.height)
+    return pygame.Rect(CENTERING_OFFSET + platform.x - platform.width / 2, PLAYAREA_HEIGHT - platform.y - platform.height / 2 + relative_height, platform.width, platform.height)
 
-def draw_rectangle(window, color, rect):
-    pygame.draw.rect(window, color, rect)
+def draw_rectangle(color, rect):
+    pygame.draw.rect(WINDOW, color, rect)
 
-def draw_platform(window, rect):
-    draw_rectangle(window, (255, 255, 255), rect)
+def draw_walls():
+    pygame.draw.rect(WINDOW, (255, 255, 255), pygame.Rect(WINDOW_WIDTH / 2 - PLAYAREA_WIDTH / 2 - platform_height, 0, platform_height, WINDOW_HEIGHT))
+    pygame.draw.rect(WINDOW, (255, 255, 255), pygame.Rect(WINDOW_WIDTH / 2 + PLAYAREA_WIDTH / 2, 0, platform_height, WINDOW_HEIGHT))
 
-def draw_score(window, score):
+def draw_platform(rect):
+    draw_rectangle((255, 255, 255), rect)
+
+def draw_score(score):
     text = MAIN_FONT.render(str(score), True, (24, 158, 199))
-    window.blit(text, text.get_rect(center=(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2)))
+    WINDOW.blit(text, text.get_rect(center=(CENTERING_OFFSET + PLAYAREA_WIDTH / 2, PLAYAREA_HEIGHT / 2)))
 
-def draw_death_message(window, score):
+def draw_death_message(score):
     text = MAIN_FONT_SMALL.render("you died, your final score is " + str(score), True, (24, 158, 199))
     text2 = MAIN_FONT_SMALL.render("press right mouse button to reset", True, (24, 158, 199))
-    window.blit(text, text.get_rect(center=(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - MAIN_FONT_SMALL.size("you died, your final score is ")[1] / 2)))
-    window.blit(text2, text2.get_rect(center=(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 + MAIN_FONT_SMALL.size("press right mouse button to reset")[1] / 2)))
+    WINDOW.blit(text, text.get_rect(center=(CENTERING_OFFSET + PLAYAREA_WIDTH / 2, PLAYAREA_HEIGHT / 2 - MAIN_FONT_SMALL.size("you died, your final score is ")[1] / 2)))
+    WINDOW.blit(text2, text2.get_rect(center=(CENTERING_OFFSET + PLAYAREA_WIDTH / 2, PLAYAREA_HEIGHT / 2 + MAIN_FONT_SMALL.size("press right mouse button to reset")[1] / 2)))
 
 def horizontal_bounce(player_velocity_x):
     player_velocity_x += (player_velocity_x / 2) * (-1)
