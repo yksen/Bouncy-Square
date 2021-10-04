@@ -1,14 +1,19 @@
 import pygame
 import random
+import math
 
 # ESSENTIALS #
 
 pygame.init()
 
 WINDOW = pygame.display.set_mode(flags=pygame.FULLSCREEN)
-pygame.display.set_caption("Game2")
-WINDOW_SIZE = pygame.display.get_window_size()
+pygame.display.set_caption("Bouncy Square")
+icon = pygame.image.load("assets/images/icon.ico").convert()
+pygame.display.set_icon(icon)
 
+COLLISION_SOUND = pygame.mixer.Sound("assets/sounds/collision.wav")
+
+WINDOW_SIZE = pygame.display.get_window_size()
 WINDOW_WIDTH = WINDOW_SIZE[0]
 WINDOW_HEIGHT = WINDOW_SIZE[1]
 
@@ -24,7 +29,7 @@ MAIN_FONT_SMALL = pygame.font.SysFont('calibri', int(PLAYAREA_HEIGHT / 32), ital
 
 relative_height = 0
 
-platform_minimum_width = 250
+platform_minimum_width = 300
 platform_maximum_width = 400
 platform_height = 25
 
@@ -73,6 +78,13 @@ def draw_death_message(score):
     WINDOW.blit(text, text.get_rect(center=(CENTERING_OFFSET + PLAYAREA_WIDTH / 2, PLAYAREA_HEIGHT / 2 - MAIN_FONT_SMALL.size("you died, your final score is ")[1] / 2)))
     WINDOW.blit(text2, text2.get_rect(center=(CENTERING_OFFSET + PLAYAREA_WIDTH / 2, PLAYAREA_HEIGHT / 2 + MAIN_FONT_SMALL.size("press right mouse button to reset")[1] / 2)))
 
+def draw_fps(frame_time):
+    text = MAIN_FONT_SMALL.render(str(math.floor(frame_time)), True, (255, 255, 255))
+    WINDOW.blit(text, text.get_rect())
+
+def draw_clicked_point(mouse_start_position):
+    pygame.draw.circle(WINDOW, (92, 92, 92), (mouse_start_position[0], mouse_start_position[1]), 5)
+
 def horizontal_bounce(player_velocity_x):
     player_velocity_x += (player_velocity_x / 2) * (-1)
     player_velocity_x *= -1
@@ -100,3 +112,16 @@ def change_relative_height(height):
     else:
         relative_height += height
     return relative_height
+
+def change_difficulty(score):
+    global platform_minimum_width
+    global platform_maximum_width
+    if score == "reset":
+        platform_minimum_width = 250
+        platform_maximum_width = 400
+    elif score % 10 == 0 and score < 500:
+        platform_minimum_width -= 28
+        platform_maximum_width -= 34
+
+def play_collision_sound():
+    pygame.mixer.Sound.play(COLLISION_SOUND)
