@@ -119,9 +119,9 @@ def change_difficulty(score):
     if score == "reset":
         platform_minimum_width = 250
         platform_maximum_width = 400
-    elif score % 10 == 0 and score < 500:
-        platform_minimum_width -= 28
-        platform_maximum_width -= 34
+    elif score % 10 == 0 and score <= 100:
+        platform_minimum_width -= 30
+        platform_maximum_width -= 40
 
 def play_collision_sound():
     pygame.mixer.Sound.play(COLLISION_SOUND)
