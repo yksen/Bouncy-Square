@@ -64,7 +64,7 @@ while True:
     else:
         dt = 7
         dt_sum += dt
-        
+
     # EVENTS #
     
     events = pygame.event.get()
@@ -112,6 +112,7 @@ while True:
     player_velocity_y += gravity * dt
 
     # COLLISIONS #
+
     collision_occured = False
     if player_x + player_velocity_x * dt < player_width / 2 or player_x + player_velocity_x * dt > PLAYAREA_WIDTH - player_width / 2:
         player_velocity_x = horizontal_bounce(player_velocity_x)
@@ -154,15 +155,15 @@ while True:
         platforms.pop(0)
 
     # DRAWING #
+    
+    if screen_scrolling_active and relative_height < (PLAYAREA_HEIGHT / 2) * (platform_id - 1):        
+        relative_height = change_relative_height(dt * height_increase)
+        if relative_height + height_increase >= (PLAYAREA_HEIGHT / 2) * (platform_id - 1):
+            screen_scrolling_active = False
 
     if drawing_enabled:
         WINDOW.fill((0, 0, 0))
         draw_walls()
-
-        if screen_scrolling_active and relative_height < (PLAYAREA_HEIGHT / 2) * (platform_id - 1):        
-            relative_height = change_relative_height(dt * height_increase)
-            if relative_height + height_increase >= (PLAYAREA_HEIGHT / 2) * (platform_id - 1):
-                screen_scrolling_active = False
 
         if player_alive:
             draw_score(score)
