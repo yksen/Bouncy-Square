@@ -1,3 +1,4 @@
+from pygame import draw
 from functions import *
 import pygame
 import pygame.constants
@@ -12,9 +13,12 @@ FRAME_TIME = pygame.time.Clock()
 # VARIABLES #
 
 show_fps = False
+drawing_enabled = True
 
-dt = 0.001
-gravity = -10
+dt = 1
+dt_sum = 0
+original_dt = 0
+gravity = -0.0066
 
 collision_occured = False
 screen_scrolling_active = False
@@ -46,6 +50,21 @@ platforms.append(generate_platform(platform_id))
 
 while True:
 
+    # TIME #
+    
+    FRAME_TIME.tick()
+    dt = FRAME_TIME.get_time()
+    if dt > 7 and drawing_enabled:
+        original_dt = dt
+        dt = 7
+        dt_sum = dt
+        drawing_enabled = False
+    elif dt_sum >= original_dt:
+        drawing_enabled = True
+    else:
+        dt = 7
+        dt_sum += dt
+        
     # EVENTS #
     
     events = pygame.event.get()
@@ -56,8 +75,8 @@ while True:
         if event.type == pygame.MOUSEBUTTONUP and event.button == 1 and mouse_clicked and player_alive:
             mouse_clicked = False
             mouse_end_position = pygame.mouse.get_pos()
-            player_velocity_x += (mouse_start_position[0] - mouse_end_position[0]) * 0.015
-            player_velocity_y -= (mouse_start_position[1] - mouse_end_position[1]) * 0.015
+            player_velocity_x += (mouse_start_position[0] - mouse_end_position[0]) * 0.006
+            player_velocity_y -= (mouse_start_position[1] - mouse_end_position[1]) * 0.006
         if event.type == pygame.MOUSEBUTTONUP and event.button == 3:
             mouse_clicked = False
             screen_scrolling_active = False
@@ -86,49 +105,28 @@ while True:
             pygame.quit()
             sys.exit()
 
-    # DRAWING #
+    # PHYSICS #
 
-    WINDOW.fill((0, 0, 0))
-    draw_walls()
-
-    if screen_scrolling_active and relative_height < (PLAYAREA_HEIGHT / 2) * (platform_id - 1):        
-        relative_height = change_relative_height(dt * 1000 * height_increase)
-        if relative_height + height_increase >= (PLAYAREA_HEIGHT / 2) * (platform_id - 1):
-            screen_scrolling_active = False
-
-    if player_alive:
-        draw_score(score)
-    else:
-        draw_death_message(score)
-
-    draw_rectangle((150, 27, 95), player_rectangle(player_x, player_y, player_width, player_height))
-    for platform in platforms:
-        draw_platform(platform_rectangle(platform))
-
-    if mouse_clicked:
-        draw_clicked_point(mouse_start_position)
-
-    if show_fps:
-        draw_fps(FRAME_TIME.get_fps())
-
-    pygame.display.update()
+    player_x += player_velocity_x * dt
+    player_y += player_velocity_y * dt
+    player_velocity_y += gravity * dt
 
     # COLLISIONS #
     collision_occured = False
-    if player_x + player_velocity_x < player_width / 2 or player_x + player_velocity_x > PLAYAREA_WIDTH - player_width / 2:
+    if player_x + player_velocity_x * dt < player_width / 2 or player_x + player_velocity_x * dt > PLAYAREA_WIDTH - player_width / 2:
         player_velocity_x = horizontal_bounce(player_velocity_x)
         collision_occured = True
-    if player_y + player_velocity_y < player_height / 2 + relative_height:
+    if player_y + player_velocity_y * dt < player_height / 2 + relative_height:
         if death_enabled:
             player_alive = False
         else:
             player_velocity_x, player_velocity_y = vertical_bounce(player_velocity_x, player_velocity_y)
             collision_occured = True
-    elif player_y + player_velocity_y > PLAYAREA_HEIGHT - player_height / 2 + relative_height:
+    elif player_y + player_velocity_y * dt > PLAYAREA_HEIGHT - player_height / 2 + relative_height:
         player_velocity_x, player_velocity_y = vertical_bounce(player_velocity_x, player_velocity_y)
         collision_occured = True
     for platform in platforms:
-        player_rect = player_rectangle(player_x + player_velocity_x, player_y + player_velocity_y, player_width, player_height)
+        player_rect = player_rectangle(player_x + player_velocity_x * dt, player_y + player_velocity_y * dt, player_width, player_height)
         platform_rect = platform_rectangle(platform)
         if pygame.Rect.colliderect(player_rect, platform_rect):
             collision_occured = True
@@ -144,12 +142,6 @@ while True:
     if collision_occured and player_velocity_y > 0.1:
         play_collision_sound()
 
-    # PHYSICS #
-
-    player_x += player_velocity_x
-    player_y += player_velocity_y
-    player_velocity_y += gravity * dt
-
     # GAME #
     
     if score == platform_id + 1:
@@ -161,7 +153,30 @@ while True:
         screen_scrolling_active = True
         platforms.pop(0)
 
-    # TIME #
-    
-    FRAME_TIME.tick()
-    dt = 0.001 * FRAME_TIME.get_time()
+    # DRAWING #
+
+    if drawing_enabled:
+        WINDOW.fill((0, 0, 0))
+        draw_walls()
+
+        if screen_scrolling_active and relative_height < (PLAYAREA_HEIGHT / 2) * (platform_id - 1):        
+            relative_height = change_relative_height(dt * height_increase)
+            if relative_height + height_increase >= (PLAYAREA_HEIGHT / 2) * (platform_id - 1):
+                screen_scrolling_active = False
+
+        if player_alive:
+            draw_score(score)
+        else:
+            draw_death_message(score)
+
+        draw_rectangle((150, 27, 95), player_rectangle(player_x, player_y, player_width, player_height))
+        for platform in platforms:
+            draw_platform(platform_rectangle(platform))
+
+        if mouse_clicked:
+            draw_clicked_point(mouse_start_position)
+
+        if show_fps:
+            draw_fps(FRAME_TIME.get_fps())
+
+        pygame.display.update()
